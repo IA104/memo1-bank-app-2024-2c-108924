@@ -2,6 +2,9 @@ package com.aninfo;
 
 import com.aninfo.model.Account;
 import com.aninfo.service.AccountService;
+import com.aninfo.service.TransactionService;
+import com.aninfo.model.Transaction;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -11,13 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
-
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @SpringBootApplication
@@ -27,9 +30,13 @@ public class Memo1BankApp {
 	@Autowired
 	private AccountService accountService;
 
+	@Autowired
+	private TransactionService transactionService;
+
 	public static void main(String[] args) {
 		SpringApplication.run(Memo1BankApp.class, args);
 	}
+
 
 	@PostMapping("/accounts")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -75,12 +82,32 @@ public class Memo1BankApp {
 		return accountService.deposit(cbu, sum);
 	}
 
+	@GetMapping("/transactions/{cbu}")
+	public List<Transaction> findAllTransactionsByCbu(@PathVariable Long cbu) {
+		return transactionService.findAllTransactionsByCbu(cbu);
+	}
+
+	@GetMapping("/transactions/{cbu}/{id}")
+	public ResponseEntity<Transaction> findTransactionById(@PathVariable Long cbu, @PathVariable Long id) {
+		Transaction transaction = transactionService.getTransactionById(id);
+		if (transaction != null && transaction.getAccount().getCbu().equals(cbu)) {
+			return ResponseEntity.ok(transaction);
+		} else {
+			return ResponseEntity.notFound().build();
+		}
+	}
+
+	@DeleteMapping("/transactions/{id}")
+	public void deleteTransactionById(@PathVariable Long id) {
+		transactionService.deleteTransactionById(id);
+	}
+
 	@Bean
 	public Docket apiDocket() {
 		return new Docket(DocumentationType.SWAGGER_2)
-			.select()
-			.apis(RequestHandlerSelectors.any())
-			.paths(PathSelectors.any())
-			.build();
+				.select()
+				.apis(RequestHandlerSelectors.any())
+				.paths(PathSelectors.any())
+				.build();
 	}
 }
